@@ -5,79 +5,104 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>RAGAA - Music Streamer</title>
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-    body { background-color: #121212; color: #fff; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; }
+    body { background-color: #121212; color: #ffffff; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
 
     /* Layout */
     .container { display: flex; flex: 1; height: calc(100vh - 85px); overflow: hidden; }
 
-    /* Scrollable Sidebar */
-    .sidebar { width: 260px; background: #000; padding: 20px 14px; display: flex; flex-direction: column; overflow-y: auto; }
-    .sidebar::-webkit-scrollbar { width: 4px; }
+    /* Sidebar */
+    .sidebar { width: 280px; background: #000000; padding: 20px 14px; display: flex; flex-direction: column; overflow-y: auto; border-right: 1px solid #222; }
+    .sidebar::-webkit-scrollbar { width: 5px; }
     .sidebar::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
 
-    .brand-title { color: #1db954; font-size: 26px; font-weight: 900; letter-spacing: 2px; margin-bottom: 16px; }
-    .section-label { font-size: 11px; font-weight: 700; text-transform: uppercase; color: #777; margin: 16px 8px 6px 8px; letter-spacing: 1px; }
-    
-    .nav-btn { background: none; border: none; color: #b3b3b3; font-size: 13.5px; text-align: left; cursor: pointer; padding: 7px 10px; border-radius: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; width: 100%; }
-    .nav-btn:hover { color: #fff; background: #1f1f1f; }
-    .nav-btn.primary { font-size: 15px; font-weight: 600; color: #fff; }
+    .brand-title { color: #1db954; font-size: 26px; font-weight: 900; letter-spacing: 2px; margin-bottom: 18px; padding-left: 6px; }
+
+    /* Nav Main Items */
+    .main-nav-btn { background: #181818; border: none; color: #ffffff; font-size: 14px; font-weight: 600; text-align: left; cursor: pointer; padding: 10px 12px; border-radius: 6px; width: 100%; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+    .main-nav-btn:hover { background: #282828; color: #1db954; }
+
+    /* Category Accordion Header */
+    .category-card { margin-top: 10px; border-bottom: 1px solid #1a1a1a; }
+    .category-header { 
+      background: none; border: none; width: 100%; color: #d1d1d1; 
+      font-size: 13px; font-weight: 700; text-transform: uppercase; 
+      letter-spacing: 0.8px; padding: 12px 8px; cursor: pointer; 
+      display: flex; justify-content: space-between; align-items: center; 
+      transition: color 0.2s;
+    }
+    .category-header:hover { color: #1db954; }
+    .arrow-icon { font-size: 11px; transition: transform 0.2s ease; }
+    .category-card.active .arrow-icon { transform: rotate(180deg); }
+
+    /* Sub-Singers List */
+    .singers-drawer { display: none; flex-direction: column; padding: 4px 0 10px 10px; }
+    .category-card.active .singers-drawer { display: flex; }
+
+    .singer-btn { 
+      background: none; border: none; color: #a0a0a0; 
+      font-size: 13.5px; font-weight: 500; text-align: left; 
+      cursor: pointer; padding: 7px 10px; border-radius: 4px; 
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      transition: all 0.2s;
+    }
+    .singer-btn:hover { color: #ffffff; background: #1c1c1c; padding-left: 14px; }
 
     /* Main Section */
-    .main-content { flex: 1; padding: 24px; overflow-y: auto; background: linear-gradient(180deg, #1f1f1f 0%, #121212 100%); display: flex; flex-direction: column; justify-content: space-between; }
+    .main-content { flex: 1; padding: 24px; overflow-y: auto; background: linear-gradient(180deg, #202020 0%, #121212 100%); display: flex; flex-direction: column; justify-content: space-between; }
     .search-box { display: flex; gap: 10px; margin-bottom: 24px; }
-    .search-box input { flex: 1; max-width: 450px; padding: 12px 18px; border-radius: 25px; border: none; outline: none; background: #2a2a2a; color: #fff; font-size: 15px; }
+    .search-box input { flex: 1; max-width: 460px; padding: 12px 18px; border-radius: 25px; border: none; outline: none; background: #2a2a2a; color: #fff; font-size: 14.5px; }
     .search-box button { padding: 12px 24px; border-radius: 25px; border: none; background: #1db954; color: #000; font-weight: bold; cursor: pointer; }
 
     /* Track Cards Grid */
-    .track-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 16px; margin-bottom: 30px; }
+    .track-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(185px, 1fr)); gap: 18px; margin-bottom: 30px; }
     .track-card { background: #181818; padding: 12px; border-radius: 8px; cursor: pointer; transition: 0.2s; position: relative; }
     .track-card:hover { background: #282828; }
     .track-card img { width: 100%; aspect-ratio: 16/9; object-fit: cover; border-radius: 6px; margin-bottom: 10px; }
-    .track-title { font-size: 14px; font-weight: 600; margin-bottom: 4px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .track-title { font-size: 13.5px; font-weight: 600; margin-bottom: 4px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
     .track-channel { font-size: 12px; color: #aaa; }
 
-    /* Subtle Footer */
-    .site-footer { margin-top: auto; padding: 20px 0 10px 0; border-top: 1px solid rgba(255,255,255,0.05); text-align: center; }
+    /* Footer */
+    .site-footer { margin-top: auto; padding: 20px 0 10px 0; border-top: 1px solid rgba(255,255,255,0.06); text-align: center; }
     .dev-credit { font-size: 13px; font-weight: 600; color: #888; margin-bottom: 6px; }
-    .legal-text { font-size: 8.5px; color: #3a3a3a; max-width: 600px; margin: 0 auto; line-height: 1.4; }
+    .legal-text { font-size: 8.5px; color: #3d3d3d; max-width: 650px; margin: 0 auto; line-height: 1.4; }
 
     /* Bottom Player Bar */
     .player-bar { position: fixed; bottom: 0; left: 0; right: 0; height: 85px; background: #181818; border-top: 1px solid #282828; display: flex; align-items: center; justify-content: space-between; padding: 0 24px; z-index: 50; }
     .player-info { display: flex; align-items: center; gap: 14px; width: 30%; cursor: pointer; }
-    .player-info img { width: 55px; height: 55px; border-radius: 6px; object-fit: cover; background: #333; }
-    .player-title { font-size: 14px; font-weight: 600; white-space: nowrap; text-overflow: ellipsis; overflow: hidden; }
+    .player-info img { width: 54px; height: 54px; border-radius: 6px; object-fit: cover; background: #333; }
+    .player-title { font-size: 13.5px; font-weight: 600; white-space: nowrap; text-overflow: ellipsis; overflow: hidden; }
     .player-artist { font-size: 12px; color: #aaa; }
     .bar-controls { display: flex; align-items: center; gap: 18px; }
     .icon-btn { background: none; border: none; color: #b3b3b3; font-size: 18px; cursor: pointer; }
     .icon-btn:hover { color: #fff; }
     .play-btn-circle { background: #fff; border: none; border-radius: 50%; width: 40px; height: 40px; cursor: pointer; font-size: 18px; color: #000; display: flex; align-items: center; justify-content: center; }
 
-    /* Full Page Now Playing View */
+    /* Full Page Player View */
     .now-playing-screen {
       position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-      background: radial-gradient(circle at center, #242029 0%, #0d0d0d 100%);
+      background: radial-gradient(circle at center, #231f28 0%, #0d0d0d 100%);
       z-index: 2000; display: none; flex-direction: column; align-items: center; justify-content: space-between;
-      padding: 40px 20px; transition: 0.3s ease;
+      padding: 40px 20px;
     }
     .now-playing-screen.active { display: flex; }
-    .top-header { width: 100%; max-width: 500px; display: flex; justify-content: space-between; align-items: center; }
+    .top-header { width: 100%; max-width: 480px; display: flex; justify-content: space-between; align-items: center; }
     .close-btn { background: none; border: none; color: #fff; font-size: 26px; cursor: pointer; }
-    .large-album-art { width: 320px; height: 320px; border-radius: 12px; box-shadow: 0 20px 50px rgba(0,0,0,0.8); object-fit: cover; margin-top: 20px; }
+    .large-album-art { width: 320px; height: 320px; border-radius: 12px; box-shadow: 0 20px 50px rgba(0,0,0,0.8); object-fit: cover; margin-top: 15px; }
     .song-meta-box { width: 100%; max-width: 450px; display: flex; justify-content: space-between; align-items: center; margin-top: 25px; }
     .meta-text { max-width: 80%; }
-    .full-title { font-size: 19px; font-weight: 700; white-space: nowrap; text-overflow: ellipsis; overflow: hidden; }
-    .full-artist { font-size: 14px; color: #b3b3b3; margin-top: 4px; }
+    .full-title { font-size: 18px; font-weight: 700; white-space: nowrap; text-overflow: ellipsis; overflow: hidden; }
+    .full-artist { font-size: 13.5px; color: #b3b3b3; margin-top: 4px; }
     .heart-btn { background: none; border: none; font-size: 24px; cursor: pointer; color: #fff; }
 
-    /* Progress & Controls */
+    /* Progress & Buttons */
     .full-controls-wrapper { width: 100%; max-width: 450px; margin-bottom: 20px; display: flex; flex-direction: column; gap: 14px; }
     .progress-bar-container { display: flex; align-items: center; gap: 10px; width: 100%; }
     .progress-bar { flex: 1; accent-color: #1db954; cursor: pointer; }
     .time-stamp { font-size: 12px; color: #aaa; }
     .buttons-row { display: flex; align-items: center; justify-content: center; gap: 32px; }
     .action-btn { background: none; border: none; color: #fff; font-size: 28px; cursor: pointer; }
-    .large-play-btn { background: #1db954; border: none; border-radius: 50%; width: 64px; height: 64px; font-size: 26px; color: #000; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+    .large-play-btn { background: #1db954; border: none; border-radius: 50%; width: 62px; height: 62px; font-size: 24px; color: #000; cursor: pointer; display: flex; align-items: center; justify-content: center; }
 
     #yt-hidden-frame { position: absolute; top: -9999px; left: -9999px; width: 1px; height: 1px; pointer-events: none; }
   </style>
@@ -89,63 +114,96 @@
   <div class="container">
     <div class="sidebar">
       <div class="brand-title">RAGAA</div>
-      <button class="nav-btn primary" onclick="fetchSongs('Top Bollywood Hits')">🏠 Home</button>
-      <button class="nav-btn primary" onclick="showFavorites()">❤️ Liked Songs</button>
 
-      <div class="section-label">Golden Era & Legends</div>
-      <button class="nav-btn" onclick="fetchSongs('Lata Mangeshkar Hit Songs')">Lata Mangeshkar</button>
-      <button class="nav-btn" onclick="fetchSongs('Kishore Kumar Hit Songs')">Kishore Kumar</button>
-      <button class="nav-btn" onclick="fetchSongs('Mohammed Rafi Classic Songs')">Mohammed Rafi</button>
-      <button class="nav-btn" onclick="fetchSongs('Asha Bhosle Hit Songs')">Asha Bhosle</button>
-      <button class="nav-btn" onclick="fetchSongs('Mukesh Classic Songs')">Mukesh</button>
-      <button class="nav-btn" onclick="fetchSongs('Manna Dey Hit Songs')">Manna Dey</button>
-      <button class="nav-btn" onclick="fetchSongs('K. J. Yesudas Songs')">K. J. Yesudas</button>
+      <button class="main-nav-btn" onclick="fetchSongs('Top Bollywood Songs')">🏠 Home</button>
+      <button class="main-nav-btn" onclick="showFavorites()">❤️ Liked Songs</button>
 
-      <div class="section-label">1990s - 2000s Playback Icons</div>
-      <button class="nav-btn" onclick="fetchSongs('Sonu Nigam Best Songs')">Sonu Nigam</button>
-      <button class="nav-btn" onclick="fetchSongs('Alka Yagnik Hit Songs')">Alka Yagnik</button>
-      <button class="nav-btn" onclick="fetchSongs('Kumar Sanu 90s Songs')">Kumar Sanu</button>
-      <button class="nav-btn" onclick="fetchSongs('Udit Narayan Hit Songs')">Udit Narayan</button>
-      <button class="nav-btn" onclick="fetchSongs('Shaan Best Songs')">Shaan</button>
-      <button class="nav-btn" onclick="fetchSongs('Sunidhi Chauhan Hits')">Sunidhi Chauhan</button>
-      <button class="nav-btn" onclick="fetchSongs('Shankar Mahadevan Hits')">Shankar Mahadevan</button>
-      <button class="nav-btn" onclick="fetchSongs('KK Krishnakumar Kunnath Songs')">KK</button>
+      <!-- Category 1 -->
+      <div class="category-card" id="cat1">
+        <button class="category-header" onclick="toggleCategory('cat1')">
+          <span>Golden Era & Legends</span>
+          <span class="arrow-icon">▼</span>
+        </button>
+        <div class="singers-drawer">
+          <button class="singer-btn" onclick="fetchSongs('Lata Mangeshkar best solo songs')">Lata Mangeshkar</button>
+          <button class="singer-btn" onclick="fetchSongs('Kishore Kumar hit romantic songs')">Kishore Kumar</button>
+          <button class="singer-btn" onclick="fetchSongs('Mohammed Rafi classic songs')">Mohammed Rafi</button>
+          <button class="singer-btn" onclick="fetchSongs('Asha Bhosle hit solo songs')">Asha Bhosle</button>
+          <button class="singer-btn" onclick="fetchSongs('Mukesh classic songs')">Mukesh</button>
+          <button class="singer-btn" onclick="fetchSongs('Manna Dey best songs')">Manna Dey</button>
+          <button class="singer-btn" onclick="fetchSongs('K. J. Yesudas songs')">K. J. Yesudas</button>
+        </div>
+      </div>
 
-      <div class="section-label">Modern & Contemporary</div>
-      <button class="nav-btn" onclick="fetchSongs('Arijit Singh Hits')">Arijit Singh</button>
-      <button class="nav-btn" onclick="fetchSongs('Shreya Ghoshal Hits')">Shreya Ghoshal</button>
-      <button class="nav-btn" onclick="fetchSongs('Jubin Nautiyal Romantic Hits')">Jubin Nautiyal</button>
-      <button class="nav-btn" onclick="fetchSongs('Neha Kakkar Hit Songs')">Neha Kakkar</button>
-      <button class="nav-btn" onclick="fetchSongs('Armaan Malik Hits')">Armaan Malik</button>
-      <button class="nav-btn" onclick="fetchSongs('Sid Sriram Hits')">Sid Sriram</button>
-      <button class="nav-btn" onclick="fetchSongs('Diljit Dosanjh Hits')">Diljit Dosanjh</button>
+      <!-- Category 2 -->
+      <div class="category-card" id="cat2">
+        <button class="category-header" onclick="toggleCategory('cat2')">
+          <span>1990s - 2000s Playback</span>
+          <span class="arrow-icon">▼</span>
+        </button>
+        <div class="singers-drawer">
+          <button class="singer-btn" onclick="fetchSongs('Sonu Nigam solo romantic songs')">Sonu Nigam</button>
+          <button class="singer-btn" onclick="fetchSongs('Alka Yagnik 90s hit songs')">Alka Yagnik</button>
+          <button class="singer-btn" onclick="fetchSongs('Kumar Sanu 90s melodious songs')">Kumar Sanu</button>
+          <button class="singer-btn" onclick="fetchSongs('Udit Narayan hit songs')">Udit Narayan</button>
+          <button class="singer-btn" onclick="fetchSongs('Shaan best songs')">Shaan</button>
+          <button class="singer-btn" onclick="fetchSongs('Sunidhi Chauhan hit songs')">Sunidhi Chauhan</button>
+          <button class="singer-btn" onclick="fetchSongs('Shankar Mahadevan hit songs')">Shankar Mahadevan</button>
+          <button class="singer-btn" onclick="fetchSongs('KK Krishnakumar Kunnath solo songs')">KK</button>
+        </div>
+      </div>
 
-      <div class="section-label">Indie & Regional</div>
-      <button class="nav-btn" onclick="fetchSongs('Prateek Kuhad Songs')">Prateek Kuhad</button>
-      <button class="nav-btn" onclick="fetchSongs('Anirudh Ravichander Hits')">Anirudh Ravichander</button>
-      <button class="nav-btn" onclick="fetchSongs('Ritviz Songs')">Ritviz</button>
+      <!-- Category 3 -->
+      <div class="category-card" id="cat3">
+        <button class="category-header" onclick="toggleCategory('cat3')">
+          <span>Modern & Contemporary</span>
+          <span class="arrow-icon">▼</span>
+        </button>
+        <div class="singers-drawer">
+          <button class="singer-btn" onclick="fetchSongs('Arijit Singh solo romantic songs')">Arijit Singh</button>
+          <button class="singer-btn" onclick="fetchSongs('Shreya Ghoshal hit songs')">Shreya Ghoshal</button>
+          <button class="singer-btn" onclick="fetchSongs('Jubin Nautiyal hit songs')">Jubin Nautiyal</button>
+          <button class="singer-btn" onclick="fetchSongs('Neha Kakkar hit songs')">Neha Kakkar</button>
+          <button class="singer-btn" onclick="fetchSongs('Armaan Malik solo songs')">Armaan Malik</button>
+          <button class="singer-btn" onclick="fetchSongs('Sid Sriram best songs')">Sid Sriram</button>
+          <button class="singer-btn" onclick="fetchSongs('Diljit Dosanjh hit songs')">Diljit Dosanjh</button>
+        </div>
+      </div>
+
+      <!-- Category 4 -->
+      <div class="category-card" id="cat4">
+        <button class="category-header" onclick="toggleCategory('cat4')">
+          <span>Indie & Regional</span>
+          <span class="arrow-icon">▼</span>
+        </button>
+        <div class="singers-drawer">
+          <button class="singer-btn" onclick="fetchSongs('Prateek Kuhad songs')">Prateek Kuhad</button>
+          <button class="singer-btn" onclick="fetchSongs('Anirudh Ravichander hit tracks')">Anirudh Ravichander</button>
+          <button class="singer-btn" onclick="fetchSongs('Ritviz songs')">Ritviz</button>
+        </div>
+      </div>
     </div>
 
     <div class="main-content">
       <div>
         <div class="search-box">
-          <input type="text" id="searchInput" placeholder="Search track, singer, or playlist..." />
+          <input type="text" id="searchInput" placeholder="Search track or singer..." />
           <button onclick="handleSearch()">Search</button>
         </div>
-        <h3 id="sectionTitle" style="margin-bottom: 20px;">Top Hits</h3>
+        <h3 id="sectionTitle" style="margin-bottom: 20px; font-size: 18px;">Top Hits</h3>
         <div class="track-grid" id="trackGrid"></div>
       </div>
 
       <div class="site-footer">
         <div class="dev-credit">Developed by Bhavesh</div>
         <div class="legal-text">
-          &copy; 2026 RAGAA. All rights reserved. Compliant with IT Rules, intermediary guidelines, and relevant copyright policies. Audio content is delivered via official third-party embed integrations.
+          &copy; 2026 RAGAA. All rights reserved. Compliant with IT Rules and copyright policies. Content streamed via official third-party embed integration.
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Bottom Mini Player -->
+  <!-- Bottom Player Bar -->
   <div class="player-bar">
     <div class="player-info" onclick="openFullPlayer()">
       <img id="barThumb" src="https://via.placeholder.com/55" alt="" />
@@ -208,6 +266,20 @@
     let currentIndex = -1;
     let timer = null;
 
+    // Accordion Toggle Logic
+    function toggleCategory(catId) {
+      const el = document.getElementById(catId);
+      const isAlreadyActive = el.classList.contains('active');
+      
+      // Close all others
+      document.querySelectorAll('.category-card').forEach(c => c.classList.remove('active'));
+      
+      // Toggle clicked
+      if (!isAlreadyActive) {
+        el.classList.add('active');
+      }
+    }
+
     function onYouTubeIframeAPIReady() {
       ytPlayer = new YT.Player('yt-player', {
         height: '200', width: '200',
@@ -236,7 +308,7 @@
     }
 
     async function fetchSongs(query) {
-      document.getElementById('sectionTitle').innerText = `Results for: ${query}`;
+      document.getElementById('sectionTitle').innerText = `Results for: ${query.replace('best solo songs', '').replace('hit romantic songs', '').replace('songs', '')}`;
       try {
         const res = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
         const data = await res.json();
@@ -245,7 +317,7 @@
           renderSongs(currentTracks);
         }
       } catch (err) {
-        alert('Server se tracks nahi mil paye.');
+        alert('Server se tracks fetch nahi ho paye.');
       }
     }
 
