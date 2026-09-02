@@ -2,67 +2,138 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 
-// Express application initialize
 const app = express();
-
-// Middleware setup
 app.use(cors());
 app.use(express.json());
-
-// Public folder jahan index.html rakhi hai use serve karna
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Render ke Environment Variables se API key lena
-const YOUTUBE_API_KEY = process.env.YOUTUBE_API_KEY;
+// 1. Multiple API Keys Parser (Comma separated)
+const rawKeys = process.env.YOUTUBE_API_KEY || '';
+const API_KEYS = rawKeys.split(',').map(k => k.trim()).filter(k => k.length > 0);
+let currentKeyIndex = 0;
 
-// 1. Health Check Route (Check karne ke liye server live hai ya nahi)
-app.get('/api/health', (req, res) => {
-  res.json({ status: 'OK', message: 'RAGAA Backend Server Running Successfully!' });
-});
+// Helper: Active Key nikalna
+function getActiveKey() {
+  if (API_KEYS.length === 0) return null;
+  return API_KEYS[currentKeyIndex % API_KEYS.length];
+}
 
-// 2. YouTube Search API Endpoint
+// Helper: Quota exhaust hone par agli key par shift karna
+function rotateToNextKey() {
+  if (API_KEYS.length > 1) {
+    currentKeyIndex = (currentKeyIndex + 1) % API_KEYS.length;
+    console.warn(`[API Switch] Shifting to next API key: Key Index ${currentKeyIndex}`);
+  }
+}
+
+// 2. High-Performance In-Memory Cache (24 Hours TTL)
+const searchCache = new Map();
+const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 Ghante
+
+function getFromCache(query) {
+  const cached = searchCache.get(query);
+  if (!cached) return null;
+  if (Date.now() > cached.expiresAt) {
+    searchCache.delete(query);
+    return null;
+  }
+  return cached.data;
+}
+
+function saveToCache(query, data) {
+  // Memory save rakhne ke liye agar cache 1000 se zyada ho jaye to purani entries saaf karna
+  if (searchCache.size > 1000) {
+    const oldestKey = searchCache.keys().next().value;
+    searchCache.delete(oldestKey);
+  }
+  searchCache.set(query, {
+    data: data,
+    expiresAt: Date.now() + CACHE_TTL_MS
+  });
+}
+
+// 3. Search Endpoint with Multi-Key Failover + Cache
 app.get('/api/search', async (req, res) => {
   try {
     const rawQuery = req.query.q ? req.query.q.trim() : 'Latest Bollywood Songs';
+    const cacheKey = rawQuery.toLowerCase();
 
-    // Agar API Key Render me nahi dali gayi ho to clear message dena
-    if (!YOUTUBE_API_KEY) {
-      console.error('Error: YOUTUBE_API_KEY environment variable is not defined.');
-      return res.status(500).json({ 
-        error: 'Server configuration error: YOUTUBE_API_KEY Render par missing hai. Environment variables check karein.' 
-      });
+    // Step A: Pehle check karo memory me result hai ya nahi (0 API units kharch honge)
+    const cachedData = getFromCache(cacheKey);
+    if (cachedData) {
+      console.log(`[Cache Hit] Serving from memory: "${rawQuery}"`);
+      return res.json(cachedData);
     }
 
-    // Exact user query YouTube API par bhejna taaki exact song mile
-    const youtubeEndpoint = `https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=20&q=${encodeURIComponent(rawQuery)}&type=video&key=${YOUTUBE_API_KEY}`;
-
-    const apiResponse = await fetch(youtubeEndpoint);
-    const data = await apiResponse.json();
-
-    // Agar YouTube API ne koi error throw kiya (jaise quota ya invalid key)
-    if (!apiResponse.ok) {
-      console.error('YouTube API Error Response:', data);
-      const errorMessage = data.error && data.error.message ? data.error.message : 'Failed to fetch tracks from YouTube API.';
-      return res.status(apiResponse.status).json({ error: errorMessage });
+    if (API_KEYS.length === 0) {
+      return res.status(500).json({ error: 'Render par YOUTUBE_API_KEY set nahi hai.' });
     }
 
-    // Successful response browser ko return karna
-    res.json(data);
+    // Step B: Agar cache me nahi hai, to API call karo (Retry system across all keys)
+    let attempts = 0;
+    let successData = null;
+    let lastError = null;
+
+    while (attempts < API_KEYS.length) {
+      const activeKey = getActiveKey();
+      const apiUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=20&q=${encodeURIComponent(rawQuery)}&type=video&key=${activeKey}`;
+
+      try {
+        const response = await fetch(apiUrl);
+        const data = await response.json();
+
+        // Agar quota limit hit hui (Status 403)
+        if (response.status === 403) {
+          console.warn(`[Quota Exceeded] Key index ${currentKeyIndex} is exhausted.`);
+          rotateToNextKey();
+          attempts++;
+          continue;
+        }
+
+        if (!response.ok) {
+          throw new Error(data.error ? data.error.message : 'YouTube API Error');
+        }
+
+        successData = data;
+        break; // Success! Loop stop karo
+      } catch (err) {
+        lastError = err.message;
+        rotateToNextKey();
+        attempts++;
+      }
+    }
+
+    // Agar saari keys try karne ke baad data mil gaya:
+    if (successData) {
+      saveToCache(cacheKey, successData); // Agli baar ke liye save kar lo
+      return res.json(successData);
+    }
+
+    // Agar sabhi keys ka quota khatam ho gaya ho
+    res.status(500).json({ 
+      error: 'All YouTube API keys exhausted for today or invalid. ' + (lastError || '') 
+    });
+
   } catch (error) {
-    console.error('Server Internal Error:', error);
-    res.status(500).json({ error: 'Internal Server Error: ' + error.message });
+    res.status(500).json({ error: error.message });
   }
 });
 
-// 3. Fallback Route: Agar koi direct URL open kare to index.html serve ho
+// 4. Server Health Check & Stats
+app.get('/api/health', (req, res) => {
+  res.json({
+    status: 'Running',
+    totalKeysConfigured: API_KEYS.length,
+    activeKeyIndex: currentKeyIndex,
+    cachedQueriesCount: searchCache.size
+  });
+});
+
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// 4. Port Configuration (Render automatically PORT provide karta hai)
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`=========================================`);
-  console.log(`🎵 RAGAA Server is running on Port: ${PORT}`);
-  console.log(`=========================================`);
+  console.log(`🎵 RAGAA Server Running on Port ${PORT} with ${API_KEYS.length} API Key(s)`);
 });
