@@ -3,32 +3,46 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Spotify Style Streamer</title>
+  <title>RAGAA - Music Streamer</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
     body { background-color: #121212; color: #fff; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
 
     /* Layout */
     .container { display: flex; flex: 1; height: calc(100vh - 85px); overflow: hidden; }
-    .sidebar { width: 230px; background: #000; padding: 24px 16px; display: flex; flex-direction: column; gap: 10px; }
-    .sidebar h2 { color: #1db954; font-size: 22px; margin-bottom: 12px; }
-    .nav-btn { background: none; border: none; color: #b3b3b3; font-size: 15px; text-align: left; cursor: pointer; padding: 10px; border-radius: 6px; }
-    .nav-btn:hover { color: #fff; background: #282828; }
 
-    .main-content { flex: 1; padding: 24px; overflow-y: auto; background: linear-gradient(180deg, #202020 0%, #121212 100%); }
+    /* Scrollable Sidebar */
+    .sidebar { width: 260px; background: #000; padding: 20px 14px; display: flex; flex-direction: column; overflow-y: auto; }
+    .sidebar::-webkit-scrollbar { width: 4px; }
+    .sidebar::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+
+    .brand-title { color: #1db954; font-size: 26px; font-weight: 900; letter-spacing: 2px; margin-bottom: 16px; }
+    .section-label { font-size: 11px; font-weight: 700; text-transform: uppercase; color: #777; margin: 16px 8px 6px 8px; letter-spacing: 1px; }
+    
+    .nav-btn { background: none; border: none; color: #b3b3b3; font-size: 13.5px; text-align: left; cursor: pointer; padding: 7px 10px; border-radius: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; width: 100%; }
+    .nav-btn:hover { color: #fff; background: #1f1f1f; }
+    .nav-btn.primary { font-size: 15px; font-weight: 600; color: #fff; }
+
+    /* Main Section */
+    .main-content { flex: 1; padding: 24px; overflow-y: auto; background: linear-gradient(180deg, #1f1f1f 0%, #121212 100%); display: flex; flex-direction: column; justify-content: space-between; }
     .search-box { display: flex; gap: 10px; margin-bottom: 24px; }
     .search-box input { flex: 1; max-width: 450px; padding: 12px 18px; border-radius: 25px; border: none; outline: none; background: #2a2a2a; color: #fff; font-size: 15px; }
     .search-box button { padding: 12px 24px; border-radius: 25px; border: none; background: #1db954; color: #000; font-weight: bold; cursor: pointer; }
 
-    /* Song Grid */
-    .track-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 16px; margin-bottom: 40px; }
-    .track-card { background: #181818; padding: 14px; border-radius: 8px; cursor: pointer; transition: 0.2s; position: relative; }
+    /* Track Cards Grid */
+    .track-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 16px; margin-bottom: 30px; }
+    .track-card { background: #181818; padding: 12px; border-radius: 8px; cursor: pointer; transition: 0.2s; position: relative; }
     .track-card:hover { background: #282828; }
     .track-card img { width: 100%; aspect-ratio: 16/9; object-fit: cover; border-radius: 6px; margin-bottom: 10px; }
-    .track-title { font-size: 14px; font-weight: 600; margin-bottom: 6px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .track-title { font-size: 14px; font-weight: 600; margin-bottom: 4px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
     .track-channel { font-size: 12px; color: #aaa; }
 
-    /* Bottom Bar */
+    /* Subtle Footer */
+    .site-footer { margin-top: auto; padding: 20px 0 10px 0; border-top: 1px solid rgba(255,255,255,0.05); text-align: center; }
+    .dev-credit { font-size: 13px; font-weight: 600; color: #888; margin-bottom: 6px; }
+    .legal-text { font-size: 8.5px; color: #3a3a3a; max-width: 600px; margin: 0 auto; line-height: 1.4; }
+
+    /* Bottom Player Bar */
     .player-bar { position: fixed; bottom: 0; left: 0; right: 0; height: 85px; background: #181818; border-top: 1px solid #282828; display: flex; align-items: center; justify-content: space-between; padding: 0 24px; z-index: 50; }
     .player-info { display: flex; align-items: center; gap: 14px; width: 30%; cursor: pointer; }
     .player-info img { width: 55px; height: 55px; border-radius: 6px; object-fit: cover; background: #333; }
@@ -39,24 +53,24 @@
     .icon-btn:hover { color: #fff; }
     .play-btn-circle { background: #fff; border: none; border-radius: 50%; width: 40px; height: 40px; cursor: pointer; font-size: 18px; color: #000; display: flex; align-items: center; justify-content: center; }
 
-    /* Full Page Now Playing Screen */
+    /* Full Page Now Playing View */
     .now-playing-screen {
       position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-      background: radial-gradient(circle at center, #2e2836 0%, #0d0d0d 100%);
+      background: radial-gradient(circle at center, #242029 0%, #0d0d0d 100%);
       z-index: 2000; display: none; flex-direction: column; align-items: center; justify-content: space-between;
       padding: 40px 20px; transition: 0.3s ease;
     }
     .now-playing-screen.active { display: flex; }
     .top-header { width: 100%; max-width: 500px; display: flex; justify-content: space-between; align-items: center; }
-    .close-btn { background: none; border: none; color: #fff; font-size: 28px; cursor: pointer; }
-    .large-album-art { width: 340px; height: 340px; border-radius: 12px; box-shadow: 0 20px 50px rgba(0,0,0,0.8); object-fit: cover; margin-top: 20px; }
-    .song-meta-box { width: 100%; max-width: 450px; display: flex; justify-content: space-between; align-items: center; margin-top: 30px; }
+    .close-btn { background: none; border: none; color: #fff; font-size: 26px; cursor: pointer; }
+    .large-album-art { width: 320px; height: 320px; border-radius: 12px; box-shadow: 0 20px 50px rgba(0,0,0,0.8); object-fit: cover; margin-top: 20px; }
+    .song-meta-box { width: 100%; max-width: 450px; display: flex; justify-content: space-between; align-items: center; margin-top: 25px; }
     .meta-text { max-width: 80%; }
-    .full-title { font-size: 20px; font-weight: 700; white-space: nowrap; text-overflow: ellipsis; overflow: hidden; }
+    .full-title { font-size: 19px; font-weight: 700; white-space: nowrap; text-overflow: ellipsis; overflow: hidden; }
     .full-artist { font-size: 14px; color: #b3b3b3; margin-top: 4px; }
     .heart-btn { background: none; border: none; font-size: 24px; cursor: pointer; color: #fff; }
 
-    /* Full Player Controls */
+    /* Progress & Controls */
     .full-controls-wrapper { width: 100%; max-width: 450px; margin-bottom: 20px; display: flex; flex-direction: column; gap: 14px; }
     .progress-bar-container { display: flex; align-items: center; gap: 10px; width: 100%; }
     .progress-bar { flex: 1; accent-color: #1db954; cursor: pointer; }
@@ -72,28 +86,66 @@
 
   <div id="yt-hidden-frame"><div id="yt-player"></div></div>
 
-  <!-- Main View -->
   <div class="container">
     <div class="sidebar">
-      <h2>Spotify UI</h2>
-      <button class="nav-btn" onclick="fetchSongs('Top Bollywood Hits')">🏠 Home</button>
-      <button class="nav-btn" onclick="fetchSongs('Arijit Singh Romantic Hits')">🎤 Arijit Singh</button>
-      <button class="nav-btn" onclick="fetchSongs('Punjabi Trending Hits')">🔥 Punjabi Hits</button>
-      <button class="nav-btn" onclick="fetchSongs('Lo-Fi Chill Beats')">🎧 Lo-Fi Beats</button>
-      <button class="nav-btn" onclick="showFavorites()">❤️ Liked Songs</button>
+      <div class="brand-title">RAGAA</div>
+      <button class="nav-btn primary" onclick="fetchSongs('Top Bollywood Hits')">🏠 Home</button>
+      <button class="nav-btn primary" onclick="showFavorites()">❤️ Liked Songs</button>
+
+      <div class="section-label">Golden Era & Legends</div>
+      <button class="nav-btn" onclick="fetchSongs('Lata Mangeshkar Hit Songs')">Lata Mangeshkar</button>
+      <button class="nav-btn" onclick="fetchSongs('Kishore Kumar Hit Songs')">Kishore Kumar</button>
+      <button class="nav-btn" onclick="fetchSongs('Mohammed Rafi Classic Songs')">Mohammed Rafi</button>
+      <button class="nav-btn" onclick="fetchSongs('Asha Bhosle Hit Songs')">Asha Bhosle</button>
+      <button class="nav-btn" onclick="fetchSongs('Mukesh Classic Songs')">Mukesh</button>
+      <button class="nav-btn" onclick="fetchSongs('Manna Dey Hit Songs')">Manna Dey</button>
+      <button class="nav-btn" onclick="fetchSongs('K. J. Yesudas Songs')">K. J. Yesudas</button>
+
+      <div class="section-label">1990s - 2000s Playback Icons</div>
+      <button class="nav-btn" onclick="fetchSongs('Sonu Nigam Best Songs')">Sonu Nigam</button>
+      <button class="nav-btn" onclick="fetchSongs('Alka Yagnik Hit Songs')">Alka Yagnik</button>
+      <button class="nav-btn" onclick="fetchSongs('Kumar Sanu 90s Songs')">Kumar Sanu</button>
+      <button class="nav-btn" onclick="fetchSongs('Udit Narayan Hit Songs')">Udit Narayan</button>
+      <button class="nav-btn" onclick="fetchSongs('Shaan Best Songs')">Shaan</button>
+      <button class="nav-btn" onclick="fetchSongs('Sunidhi Chauhan Hits')">Sunidhi Chauhan</button>
+      <button class="nav-btn" onclick="fetchSongs('Shankar Mahadevan Hits')">Shankar Mahadevan</button>
+      <button class="nav-btn" onclick="fetchSongs('KK Krishnakumar Kunnath Songs')">KK</button>
+
+      <div class="section-label">Modern & Contemporary</div>
+      <button class="nav-btn" onclick="fetchSongs('Arijit Singh Hits')">Arijit Singh</button>
+      <button class="nav-btn" onclick="fetchSongs('Shreya Ghoshal Hits')">Shreya Ghoshal</button>
+      <button class="nav-btn" onclick="fetchSongs('Jubin Nautiyal Romantic Hits')">Jubin Nautiyal</button>
+      <button class="nav-btn" onclick="fetchSongs('Neha Kakkar Hit Songs')">Neha Kakkar</button>
+      <button class="nav-btn" onclick="fetchSongs('Armaan Malik Hits')">Armaan Malik</button>
+      <button class="nav-btn" onclick="fetchSongs('Sid Sriram Hits')">Sid Sriram</button>
+      <button class="nav-btn" onclick="fetchSongs('Diljit Dosanjh Hits')">Diljit Dosanjh</button>
+
+      <div class="section-label">Indie & Regional</div>
+      <button class="nav-btn" onclick="fetchSongs('Prateek Kuhad Songs')">Prateek Kuhad</button>
+      <button class="nav-btn" onclick="fetchSongs('Anirudh Ravichander Hits')">Anirudh Ravichander</button>
+      <button class="nav-btn" onclick="fetchSongs('Ritviz Songs')">Ritviz</button>
     </div>
 
     <div class="main-content">
-      <div class="search-box">
-        <input type="text" id="searchInput" placeholder="Search song, artist, or album..." />
-        <button onclick="handleSearch()">Search</button>
+      <div>
+        <div class="search-box">
+          <input type="text" id="searchInput" placeholder="Search track, singer, or playlist..." />
+          <button onclick="handleSearch()">Search</button>
+        </div>
+        <h3 id="sectionTitle" style="margin-bottom: 20px;">Top Hits</h3>
+        <div class="track-grid" id="trackGrid"></div>
       </div>
-      <h3 id="sectionTitle" style="margin-bottom: 20px;">Top Hits</h3>
-      <div class="track-grid" id="trackGrid"></div>
+
+      <div class="site-footer">
+        <div class="dev-credit">Developed by Bhavesh</div>
+        <div class="legal-text">
+          &copy; 2026 RAGAA. All rights reserved. Compliant with IT Rules, intermediary guidelines, and relevant copyright policies. Audio content is delivered via official third-party embed integrations.
+        </div>
+      </div>
     </div>
   </div>
 
-  <!-- Bottom Player Bar -->
+  <!-- Bottom Mini Player -->
   <div class="player-bar">
     <div class="player-info" onclick="openFullPlayer()">
       <img id="barThumb" src="https://via.placeholder.com/55" alt="" />
@@ -114,15 +166,15 @@
     </div>
   </div>
 
-  <!-- Dedicated Now Playing Page -->
+  <!-- Full Screen View -->
   <div class="now-playing-screen" id="fullPlayer">
     <div class="top-header">
       <button class="close-btn" onclick="closeFullPlayer()">↓</button>
-      <span style="font-size: 13px; letter-spacing: 1px; color: #bbb;">PLAYING FROM PLAYLIST</span>
+      <span style="font-size: 13px; letter-spacing: 1px; color: #bbb;">NOW PLAYING</span>
       <button class="close-btn" onclick="closeFullPlayer()" style="font-size: 20px;">✕</button>
     </div>
 
-    <img id="fullCover" class="large-album-art" src="https://via.placeholder.com/340" alt="Album Art" />
+    <img id="fullCover" class="large-album-art" src="https://via.placeholder.com/320" alt="Album Art" />
 
     <div class="song-meta-box">
       <div class="meta-text">
@@ -216,7 +268,7 @@
 
         card.onclick = () => {
           currentIndex = index;
-          loadAndPlayTrack(index, true); // true ka matlab: Page switch hoga
+          loadAndPlayTrack(index, true);
         };
         grid.appendChild(card);
       });
@@ -230,12 +282,10 @@
       const channel = track.snippet.channelTitle;
       const thumb = track.snippet.thumbnails.high?.url || track.snippet.thumbnails.medium.url;
 
-      // Bottom bar update
       document.getElementById('barTitle').innerText = title;
       document.getElementById('barArtist').innerText = channel;
       document.getElementById('barThumb').src = thumb;
 
-      // Full page update
       document.getElementById('fullTitle').innerText = title;
       document.getElementById('fullArtist').innerText = channel;
       document.getElementById('fullCover').src = thumb;
@@ -281,7 +331,6 @@
       document.getElementById('fullPlayer').classList.remove('active');
     }
 
-    // Progress Bar & Duration Tracker
     function startTimer() {
       clearInterval(timer);
       timer = setInterval(() => {
@@ -310,7 +359,6 @@
       return `${min}:${sec < 10 ? '0' : ''}${sec}`;
     }
 
-    // Liked Songs Management
     function isFavorite(id) {
       const favs = JSON.parse(localStorage.getItem('fav_songs') || '[]');
       return favs.some(item => item.id.videoId === id);
