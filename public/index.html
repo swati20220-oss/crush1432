@@ -3,59 +3,57 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>RAGAA - Music Streamer</title>
+  <title>RAGAA</title>
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; }
-    body { background-color: #121212; color: #ffffff; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { background-color: #121212; color: #fff; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
 
-    /* Layout */
     .container { display: flex; flex: 1; height: calc(100vh - 85px); overflow: hidden; }
 
     /* Sidebar */
-    .sidebar { width: 280px; background: #000000; padding: 20px 14px; display: flex; flex-direction: column; overflow-y: auto; border-right: 1px solid #222; }
-    .sidebar::-webkit-scrollbar { width: 5px; }
+    .sidebar { width: 280px; background: #000; padding: 20px 14px; display: flex; flex-direction: column; overflow-y: auto; }
+    .sidebar::-webkit-scrollbar { width: 4px; }
     .sidebar::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
 
-    .brand-title { color: #1db954; font-size: 26px; font-weight: 900; letter-spacing: 2px; margin-bottom: 18px; padding-left: 6px; }
+    .brand-title { color: #1db954; font-size: 26px; font-weight: 900; letter-spacing: 2px; margin-bottom: 20px; }
+    .nav-btn { background: none; border: none; color: #b3b3b3; font-size: 15px; text-align: left; cursor: pointer; padding: 10px 12px; border-radius: 6px; width: 100%; display: block; }
+    .nav-btn:hover { color: #fff; background: #1a1a1a; }
 
-    /* Nav Main Items */
-    .main-nav-btn { background: #181818; border: none; color: #ffffff; font-size: 14px; font-weight: 600; text-align: left; cursor: pointer; padding: 10px 12px; border-radius: 6px; width: 100%; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
-    .main-nav-btn:hover { background: #282828; color: #1db954; }
-
-    /* Category Accordion Header */
-    .category-card { margin-top: 10px; border-bottom: 1px solid #1a1a1a; }
-    .category-header { 
-      background: none; border: none; width: 100%; color: #d1d1d1; 
-      font-size: 13px; font-weight: 700; text-transform: uppercase; 
-      letter-spacing: 0.8px; padding: 12px 8px; cursor: pointer; 
-      display: flex; justify-content: space-between; align-items: center; 
-      transition: color 0.2s;
+    .category-group { margin-top: 14px; border-bottom: 1px solid #1a1a1a; padding-bottom: 8px; }
+    .category-header {
+      background: none; border: none; color: #fff; font-size: 13.5px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.8px; padding: 10px 12px;
+      width: 100%; text-align: left; cursor: pointer; display: flex; justify-content: space-between; align-items: center; border-radius: 6px;
     }
-    .category-header:hover { color: #1db954; }
-    .arrow-icon { font-size: 11px; transition: transform 0.2s ease; }
-    .category-card.active .arrow-icon { transform: rotate(180deg); }
+    .category-header:hover { background: #1f1f1f; }
+    .category-header .arrow { font-size: 11px; transition: transform 0.2s ease; }
+    .category-header.open .arrow { transform: rotate(180deg); }
 
-    /* Sub-Singers List */
-    .singers-drawer { display: none; flex-direction: column; padding: 4px 0 10px 10px; }
-    .category-card.active .singers-drawer { display: flex; }
+    .singer-list { display: none; flex-direction: column; padding-left: 10px; margin-top: 4px; }
+    .singer-list.open { display: flex; }
+    .singer-btn { background: none; border: none; color: #999; font-size: 13.5px; text-align: left; cursor: pointer; padding: 7px 12px; border-radius: 4px; }
+    .singer-btn:hover { color: #1db954; background: #161616; }
 
-    .singer-btn { 
-      background: none; border: none; color: #a0a0a0; 
-      font-size: 13.5px; font-weight: 500; text-align: left; 
-      cursor: pointer; padding: 7px 10px; border-radius: 4px; 
-      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-      transition: all 0.2s;
-    }
-    .singer-btn:hover { color: #ffffff; background: #1c1c1c; padding-left: 14px; }
-
-    /* Main Section */
-    .main-content { flex: 1; padding: 24px; overflow-y: auto; background: linear-gradient(180deg, #202020 0%, #121212 100%); display: flex; flex-direction: column; justify-content: space-between; }
+    /* Main Area */
+    .main-content { flex: 1; padding: 24px; overflow-y: auto; background: linear-gradient(180deg, #1f1f1f 0%, #121212 100%); display: flex; flex-direction: column; justify-content: space-between; }
     .search-box { display: flex; gap: 10px; margin-bottom: 24px; }
-    .search-box input { flex: 1; max-width: 460px; padding: 12px 18px; border-radius: 25px; border: none; outline: none; background: #2a2a2a; color: #fff; font-size: 14.5px; }
+    .search-box input { flex: 1; max-width: 480px; padding: 12px 18px; border-radius: 25px; border: none; outline: none; background: #2a2a2a; color: #fff; font-size: 15px; }
     .search-box button { padding: 12px 24px; border-radius: 25px; border: none; background: #1db954; color: #000; font-weight: bold; cursor: pointer; }
 
-    /* Track Cards Grid */
-    .track-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(185px, 1fr)); gap: 18px; margin-bottom: 30px; }
+    /* Section Titles */
+    .section-title { font-size: 18px; font-weight: 700; margin: 20px 0 12px 0; color: #fff; }
+
+    /* Single Exact Tracks List */
+    .single-tracks-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 24px; }
+    .track-row { display: flex; align-items: center; justify-content: space-between; padding: 8px 14px; background: rgba(255,255,255,0.03); border-radius: 6px; cursor: pointer; transition: 0.2s; }
+    .track-row:hover { background: rgba(255,255,255,0.1); }
+    .track-row-left { display: flex; align-items: center; gap: 14px; overflow: hidden; }
+    .track-row img { width: 44px; height: 44px; border-radius: 4px; object-fit: cover; }
+    .track-row-title { font-size: 14px; font-weight: 600; white-space: nowrap; text-overflow: ellipsis; overflow: hidden; }
+    .track-row-channel { font-size: 12px; color: #aaa; margin-top: 2px; }
+
+    /* Playlists Grid */
+    .track-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 16px; margin-bottom: 30px; }
     .track-card { background: #181818; padding: 12px; border-radius: 8px; cursor: pointer; transition: 0.2s; position: relative; }
     .track-card:hover { background: #282828; }
     .track-card img { width: 100%; aspect-ratio: 16/9; object-fit: cover; border-radius: 6px; margin-bottom: 10px; }
@@ -63,46 +61,45 @@
     .track-channel { font-size: 12px; color: #aaa; }
 
     /* Footer */
-    .site-footer { margin-top: auto; padding: 20px 0 10px 0; border-top: 1px solid rgba(255,255,255,0.06); text-align: center; }
-    .dev-credit { font-size: 13px; font-weight: 600; color: #888; margin-bottom: 6px; }
-    .legal-text { font-size: 8.5px; color: #3d3d3d; max-width: 650px; margin: 0 auto; line-height: 1.4; }
+    .site-footer { margin-top: auto; padding: 18px 0 8px 0; border-top: 1px solid rgba(255,255,255,0.05); text-align: center; }
+    .dev-credit { font-size: 12.5px; font-weight: 600; color: #888; margin-bottom: 5px; }
+    .legal-text { font-size: 8px; color: #383838; max-width: 600px; margin: 0 auto; line-height: 1.4; }
 
     /* Bottom Player Bar */
     .player-bar { position: fixed; bottom: 0; left: 0; right: 0; height: 85px; background: #181818; border-top: 1px solid #282828; display: flex; align-items: center; justify-content: space-between; padding: 0 24px; z-index: 50; }
     .player-info { display: flex; align-items: center; gap: 14px; width: 30%; cursor: pointer; }
-    .player-info img { width: 54px; height: 54px; border-radius: 6px; object-fit: cover; background: #333; }
-    .player-title { font-size: 13.5px; font-weight: 600; white-space: nowrap; text-overflow: ellipsis; overflow: hidden; }
+    .player-info img { width: 55px; height: 55px; border-radius: 6px; object-fit: cover; background: #333; }
+    .player-title { font-size: 14px; font-weight: 600; white-space: nowrap; text-overflow: ellipsis; overflow: hidden; }
     .player-artist { font-size: 12px; color: #aaa; }
     .bar-controls { display: flex; align-items: center; gap: 18px; }
     .icon-btn { background: none; border: none; color: #b3b3b3; font-size: 18px; cursor: pointer; }
     .icon-btn:hover { color: #fff; }
     .play-btn-circle { background: #fff; border: none; border-radius: 50%; width: 40px; height: 40px; cursor: pointer; font-size: 18px; color: #000; display: flex; align-items: center; justify-content: center; }
 
-    /* Full Page Player View */
+    /* Full Player View */
     .now-playing-screen {
       position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-      background: radial-gradient(circle at center, #231f28 0%, #0d0d0d 100%);
+      background: radial-gradient(circle at center, #231f2b 0%, #0d0d0d 100%);
       z-index: 2000; display: none; flex-direction: column; align-items: center; justify-content: space-between;
       padding: 40px 20px;
     }
     .now-playing-screen.active { display: flex; }
-    .top-header { width: 100%; max-width: 480px; display: flex; justify-content: space-between; align-items: center; }
+    .top-header { width: 100%; max-width: 500px; display: flex; justify-content: space-between; align-items: center; }
     .close-btn { background: none; border: none; color: #fff; font-size: 26px; cursor: pointer; }
-    .large-album-art { width: 320px; height: 320px; border-radius: 12px; box-shadow: 0 20px 50px rgba(0,0,0,0.8); object-fit: cover; margin-top: 15px; }
+    .large-album-art { width: 320px; height: 320px; border-radius: 12px; box-shadow: 0 20px 50px rgba(0,0,0,0.8); object-fit: cover; margin-top: 20px; }
     .song-meta-box { width: 100%; max-width: 450px; display: flex; justify-content: space-between; align-items: center; margin-top: 25px; }
     .meta-text { max-width: 80%; }
-    .full-title { font-size: 18px; font-weight: 700; white-space: nowrap; text-overflow: ellipsis; overflow: hidden; }
-    .full-artist { font-size: 13.5px; color: #b3b3b3; margin-top: 4px; }
+    .full-title { font-size: 19px; font-weight: 700; white-space: nowrap; text-overflow: ellipsis; overflow: hidden; }
+    .full-artist { font-size: 14px; color: #b3b3b3; margin-top: 4px; }
     .heart-btn { background: none; border: none; font-size: 24px; cursor: pointer; color: #fff; }
 
-    /* Progress & Buttons */
     .full-controls-wrapper { width: 100%; max-width: 450px; margin-bottom: 20px; display: flex; flex-direction: column; gap: 14px; }
     .progress-bar-container { display: flex; align-items: center; gap: 10px; width: 100%; }
     .progress-bar { flex: 1; accent-color: #1db954; cursor: pointer; }
     .time-stamp { font-size: 12px; color: #aaa; }
     .buttons-row { display: flex; align-items: center; justify-content: center; gap: 32px; }
     .action-btn { background: none; border: none; color: #fff; font-size: 28px; cursor: pointer; }
-    .large-play-btn { background: #1db954; border: none; border-radius: 50%; width: 62px; height: 62px; font-size: 24px; color: #000; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+    .large-play-btn { background: #1db954; border: none; border-radius: 50%; width: 64px; height: 64px; font-size: 26px; color: #000; cursor: pointer; display: flex; align-items: center; justify-content: center; }
 
     #yt-hidden-frame { position: absolute; top: -9999px; left: -9999px; width: 1px; height: 1px; pointer-events: none; }
   </style>
@@ -114,72 +111,64 @@
   <div class="container">
     <div class="sidebar">
       <div class="brand-title">RAGAA</div>
+      <button class="nav-btn" onclick="fetchSongs('Latest Bollywood Songs')">🏠 Home</button>
+      <button class="nav-btn" onclick="showFavorites()">❤️ Liked Songs</button>
 
-      <button class="main-nav-btn" onclick="fetchSongs('Top Bollywood Songs')">🏠 Home</button>
-      <button class="main-nav-btn" onclick="showFavorites()">❤️ Liked Songs</button>
-
-      <!-- Category 1 -->
-      <div class="category-card" id="cat1">
-        <button class="category-header" onclick="toggleCategory('cat1')">
-          <span>Golden Era & Legends</span>
-          <span class="arrow-icon">▼</span>
+      <!-- Categories -->
+      <div class="category-group">
+        <button class="category-header" onclick="toggleCategory('cat1', this)">
+          Golden Era & Legends <span class="arrow">▼</span>
         </button>
-        <div class="singers-drawer">
-          <button class="singer-btn" onclick="fetchSongs('Lata Mangeshkar best solo songs')">Lata Mangeshkar</button>
-          <button class="singer-btn" onclick="fetchSongs('Kishore Kumar hit romantic songs')">Kishore Kumar</button>
-          <button class="singer-btn" onclick="fetchSongs('Mohammed Rafi classic songs')">Mohammed Rafi</button>
-          <button class="singer-btn" onclick="fetchSongs('Asha Bhosle hit solo songs')">Asha Bhosle</button>
-          <button class="singer-btn" onclick="fetchSongs('Mukesh classic songs')">Mukesh</button>
-          <button class="singer-btn" onclick="fetchSongs('Manna Dey best songs')">Manna Dey</button>
-          <button class="singer-btn" onclick="fetchSongs('K. J. Yesudas songs')">K. J. Yesudas</button>
+        <div class="singer-list" id="cat1">
+          <button class="singer-btn" onclick="fetchSongs('Lata Mangeshkar best song')">Lata Mangeshkar</button>
+          <button class="singer-btn" onclick="fetchSongs('Kishore Kumar hit song')">Kishore Kumar</button>
+          <button class="singer-btn" onclick="fetchSongs('Mohammed Rafi hit song')">Mohammed Rafi</button>
+          <button class="singer-btn" onclick="fetchSongs('Asha Bhosle hit song')">Asha Bhosle</button>
+          <button class="singer-btn" onclick="fetchSongs('Mukesh hit song')">Mukesh</button>
+          <button class="singer-btn" onclick="fetchSongs('Manna Dey song')">Manna Dey</button>
+          <button class="singer-btn" onclick="fetchSongs('K. J. Yesudas song')">K. J. Yesudas</button>
         </div>
       </div>
 
-      <!-- Category 2 -->
-      <div class="category-card" id="cat2">
-        <button class="category-header" onclick="toggleCategory('cat2')">
-          <span>1990s - 2000s Playback</span>
-          <span class="arrow-icon">▼</span>
+      <div class="category-group">
+        <button class="category-header" onclick="toggleCategory('cat2', this)">
+          1990s - 2000s Playback <span class="arrow">▼</span>
         </button>
-        <div class="singers-drawer">
-          <button class="singer-btn" onclick="fetchSongs('Sonu Nigam solo romantic songs')">Sonu Nigam</button>
-          <button class="singer-btn" onclick="fetchSongs('Alka Yagnik 90s hit songs')">Alka Yagnik</button>
-          <button class="singer-btn" onclick="fetchSongs('Kumar Sanu 90s melodious songs')">Kumar Sanu</button>
-          <button class="singer-btn" onclick="fetchSongs('Udit Narayan hit songs')">Udit Narayan</button>
-          <button class="singer-btn" onclick="fetchSongs('Shaan best songs')">Shaan</button>
-          <button class="singer-btn" onclick="fetchSongs('Sunidhi Chauhan hit songs')">Sunidhi Chauhan</button>
-          <button class="singer-btn" onclick="fetchSongs('Shankar Mahadevan hit songs')">Shankar Mahadevan</button>
-          <button class="singer-btn" onclick="fetchSongs('KK Krishnakumar Kunnath solo songs')">KK</button>
+        <div class="singer-list" id="cat2">
+          <button class="singer-btn" onclick="fetchSongs('Sonu Nigam hit song')">Sonu Nigam</button>
+          <button class="singer-btn" onclick="fetchSongs('Alka Yagnik song')">Alka Yagnik</button>
+          <button class="singer-btn" onclick="fetchSongs('Kumar Sanu romantic song')">Kumar Sanu</button>
+          <button class="singer-btn" onclick="fetchSongs('Udit Narayan hit song')">Udit Narayan</button>
+          <button class="singer-btn" onclick="fetchSongs('Shaan best song')">Shaan</button>
+          <button class="singer-btn" onclick="fetchSongs('Sunidhi Chauhan song')">Sunidhi Chauhan</button>
+          <button class="singer-btn" onclick="fetchSongs('Shankar Mahadevan song')">Shankar Mahadevan</button>
+          <button class="singer-btn" onclick="fetchSongs('KK hit song')">KK</button>
         </div>
       </div>
 
-      <!-- Category 3 -->
-      <div class="category-card" id="cat3">
-        <button class="category-header" onclick="toggleCategory('cat3')">
-          <span>Modern & Contemporary</span>
-          <span class="arrow-icon">▼</span>
+      <div class="category-group">
+        <button class="category-header" onclick="toggleCategory('cat3', this)">
+          Modern Favorites <span class="arrow">▼</span>
         </button>
-        <div class="singers-drawer">
-          <button class="singer-btn" onclick="fetchSongs('Arijit Singh solo romantic songs')">Arijit Singh</button>
-          <button class="singer-btn" onclick="fetchSongs('Shreya Ghoshal hit songs')">Shreya Ghoshal</button>
-          <button class="singer-btn" onclick="fetchSongs('Jubin Nautiyal hit songs')">Jubin Nautiyal</button>
-          <button class="singer-btn" onclick="fetchSongs('Neha Kakkar hit songs')">Neha Kakkar</button>
-          <button class="singer-btn" onclick="fetchSongs('Armaan Malik solo songs')">Armaan Malik</button>
-          <button class="singer-btn" onclick="fetchSongs('Sid Sriram best songs')">Sid Sriram</button>
-          <button class="singer-btn" onclick="fetchSongs('Diljit Dosanjh hit songs')">Diljit Dosanjh</button>
+        <div class="singer-list" id="cat3">
+          <button class="singer-btn" onclick="fetchSongs('Arijit Singh song')">Arijit Singh</button>
+          <button class="singer-btn" onclick="fetchSongs('Shreya Ghoshal song')">Shreya Ghoshal</button>
+          <button class="singer-btn" onclick="fetchSongs('Jubin Nautiyal song')">Jubin Nautiyal</button>
+          <button class="singer-btn" onclick="fetchSongs('Neha Kakkar song')">Neha Kakkar</button>
+          <button class="singer-btn" onclick="fetchSongs('Armaan Malik song')">Armaan Malik</button>
+          <button class="singer-btn" onclick="fetchSongs('Sid Sriram song')">Sid Sriram</button>
+          <button class="singer-btn" onclick="fetchSongs('Diljit Dosanjh song')">Diljit Dosanjh</button>
         </div>
       </div>
 
-      <!-- Category 4 -->
-      <div class="category-card" id="cat4">
-        <button class="category-header" onclick="toggleCategory('cat4')">
-          <span>Indie & Regional</span>
-          <span class="arrow-icon">▼</span>
+      <div class="category-group">
+        <button class="category-header" onclick="toggleCategory('cat4', this)">
+          Indie & Regional <span class="arrow">▼</span>
         </button>
-        <div class="singers-drawer">
-          <button class="singer-btn" onclick="fetchSongs('Prateek Kuhad songs')">Prateek Kuhad</button>
-          <button class="singer-btn" onclick="fetchSongs('Anirudh Ravichander hit tracks')">Anirudh Ravichander</button>
-          <button class="singer-btn" onclick="fetchSongs('Ritviz songs')">Ritviz</button>
+        <div class="singer-list" id="cat4">
+          <button class="singer-btn" onclick="fetchSongs('Prateek Kuhad song')">Prateek Kuhad</button>
+          <button class="singer-btn" onclick="fetchSongs('Anirudh Ravichander song')">Anirudh Ravichander</button>
+          <button class="singer-btn" onclick="fetchSongs('Ritviz song')">Ritviz</button>
         </div>
       </div>
     </div>
@@ -187,17 +176,23 @@
     <div class="main-content">
       <div>
         <div class="search-box">
-          <input type="text" id="searchInput" placeholder="Search track or singer..." />
+          <input type="text" id="searchInput" placeholder="Search exact song name (e.g. Kesariya, O Bedardeya)..." />
           <button onclick="handleSearch()">Search</button>
         </div>
-        <h3 id="sectionTitle" style="margin-bottom: 20px; font-size: 18px;">Top Hits</h3>
+
+        <!-- Section 1: Exact Singles -->
+        <div class="section-title">🎵 Top Matches & Songs</div>
+        <div class="single-tracks-list" id="singleTracksList"></div>
+
+        <!-- Section 2: Related & Playlists -->
+        <div class="section-title">📻 Playlists & Recommendations</div>
         <div class="track-grid" id="trackGrid"></div>
       </div>
 
       <div class="site-footer">
         <div class="dev-credit">Developed by Bhavesh</div>
         <div class="legal-text">
-          &copy; 2026 RAGAA. All rights reserved. Compliant with IT Rules and copyright policies. Content streamed via official third-party embed integration.
+          &copy; 2026 RAGAA. Compliant with IT Rules, intermediary guidelines, and digital rights standards. Audio playback is supported via third-party official streams.
         </div>
       </div>
     </div>
@@ -224,7 +219,7 @@
     </div>
   </div>
 
-  <!-- Full Screen View -->
+  <!-- Full Now Playing Page -->
   <div class="now-playing-screen" id="fullPlayer">
     <div class="top-header">
       <button class="close-btn" onclick="closeFullPlayer()">↓</button>
@@ -266,17 +261,16 @@
     let currentIndex = -1;
     let timer = null;
 
-    // Accordion Toggle Logic
-    function toggleCategory(catId) {
-      const el = document.getElementById(catId);
-      const isAlreadyActive = el.classList.contains('active');
-      
-      // Close all others
-      document.querySelectorAll('.category-card').forEach(c => c.classList.remove('active'));
-      
-      // Toggle clicked
-      if (!isAlreadyActive) {
-        el.classList.add('active');
+    function toggleCategory(catId, btn) {
+      const list = document.getElementById(catId);
+      const isOpen = list.classList.contains('open');
+
+      document.querySelectorAll('.singer-list').forEach(el => el.classList.remove('open'));
+      document.querySelectorAll('.category-header').forEach(el => el.classList.remove('open'));
+
+      if (!isOpen) {
+        list.classList.add('open');
+        btn.classList.add('open');
       }
     }
 
@@ -308,24 +302,54 @@
     }
 
     async function fetchSongs(query) {
-      document.getElementById('sectionTitle').innerText = `Results for: ${query.replace('best solo songs', '').replace('hit romantic songs', '').replace('songs', '')}`;
       try {
         const res = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
         const data = await res.json();
         if (data.items) {
           currentTracks = data.items.filter(item => item.id && item.id.videoId);
-          renderSongs(currentTracks);
+          renderResults(currentTracks);
         }
       } catch (err) {
-        alert('Server se tracks fetch nahi ho paye.');
+        alert('Server se tracks load nahi ho paye.');
       }
     }
 
-    function renderSongs(items) {
-      const grid = document.getElementById('trackGrid');
-      grid.innerHTML = '';
+    function renderResults(items) {
+      const singlesContainer = document.getElementById('singleTracksList');
+      const gridContainer = document.getElementById('trackGrid');
 
-      items.forEach((item, index) => {
+      singlesContainer.innerHTML = '';
+      gridContainer.innerHTML = '';
+
+      // Top 5 match: Direct singles row view me dikhenge
+      const singles = items.slice(0, 5);
+      singles.forEach((item, index) => {
+        const title = item.snippet.title;
+        const channel = item.snippet.channelTitle;
+        const thumb = item.snippet.thumbnails.medium.url;
+
+        const row = document.createElement('div');
+        row.className = 'track-row';
+        row.innerHTML = `
+          <div class="track-row-left">
+            <img src="${thumb}" alt="${title}" />
+            <div>
+              <div class="track-row-title">${title}</div>
+              <div class="track-row-channel">${channel}</div>
+            </div>
+          </div>
+          <span style="font-size: 13px; color: #1db954;">▶ Play Song</span>
+        `;
+        row.onclick = () => {
+          currentIndex = index;
+          loadAndPlayTrack(index, true);
+        };
+        singlesContainer.appendChild(row);
+      });
+
+      // Baki tracks: Grid card format me recommendations/playlists ban kar aayenge
+      const rest = items.slice(5);
+      rest.forEach((item, index) => {
         const title = item.snippet.title;
         const channel = item.snippet.channelTitle;
         const thumb = item.snippet.thumbnails.medium.url;
@@ -337,12 +361,11 @@
           <div class="track-title">${title}</div>
           <div class="track-channel">${channel}</div>
         `;
-
         card.onclick = () => {
-          currentIndex = index;
-          loadAndPlayTrack(index, true);
+          currentIndex = 5 + index;
+          loadAndPlayTrack(currentIndex, true);
         };
-        grid.appendChild(card);
+        gridContainer.appendChild(card);
       });
     }
 
@@ -457,19 +480,18 @@
     }
 
     function showFavorites() {
-      document.getElementById('sectionTitle').innerText = '❤️ Liked Songs';
       const favs = JSON.parse(localStorage.getItem('fav_songs') || '[]');
       currentTracks = favs;
-      renderSongs(favs);
+      renderResults(favs);
     }
 
     function handleSearch() {
-      const q = document.getElementById('searchInput').value;
+      const q = document.getElementById('searchInput').value.trim();
       if (q) fetchSongs(q);
     }
 
     window.onload = () => {
-      fetchSongs('Top Bollywood Hits');
+      fetchSongs('Latest Bollywood Songs');
     };
   </script>
 </body>
