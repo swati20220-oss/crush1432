@@ -1,75 +1,88 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const { Pool } = require('pg');
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// 1. Multiple API Keys Parser (Comma separated)
+// 1. Neon Database Connection Setup
+const DATABASE_URL = process.env.DATABASE_URL;
+let pool = null;
+
+if (DATABASE_URL) {
+  pool = new Pool({
+    connectionString: DATABASE_URL,
+    ssl: { rejectUnauthorized: false } // Neon SSL ke liye mandatory hai
+  });
+
+  // Table Auto-Creation Logic
+  const initDb = async () => {
+    try {
+      await pool.query(`
+        CREATE TABLE IF NOT EXISTS search_cache (
+          id SERIAL PRIMARY KEY,
+          search_query VARCHAR(255) UNIQUE NOT NULL,
+          results JSONB NOT NULL,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+      `);
+      console.log('✅ Connected to Neon Database & search_cache table ready!');
+    } catch (err) {
+      console.error('❌ Neon Database connection error:', err.message);
+    }
+  };
+  initDb();
+} else {
+  console.warn('⚠️ DATABASE_URL Render par missing hai. Cache memory me chalega.');
+}
+
+// 2. Multi-Key YouTube API Manager
 const rawKeys = process.env.YOUTUBE_API_KEY || '';
 const API_KEYS = rawKeys.split(',').map(k => k.trim()).filter(k => k.length > 0);
 let currentKeyIndex = 0;
 
-// Helper: Active Key nikalna
 function getActiveKey() {
   if (API_KEYS.length === 0) return null;
   return API_KEYS[currentKeyIndex % API_KEYS.length];
 }
 
-// Helper: Quota exhaust hone par agli key par shift karna
 function rotateToNextKey() {
   if (API_KEYS.length > 1) {
     currentKeyIndex = (currentKeyIndex + 1) % API_KEYS.length;
-    console.warn(`[API Switch] Shifting to next API key: Key Index ${currentKeyIndex}`);
+    console.log(`[API Switch] Switched to Key Index: ${currentKeyIndex}`);
   }
 }
 
-// 2. High-Performance In-Memory Cache (24 Hours TTL)
-const searchCache = new Map();
-const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 Ghante
-
-function getFromCache(query) {
-  const cached = searchCache.get(query);
-  if (!cached) return null;
-  if (Date.now() > cached.expiresAt) {
-    searchCache.delete(query);
-    return null;
-  }
-  return cached.data;
-}
-
-function saveToCache(query, data) {
-  // Memory save rakhne ke liye agar cache 1000 se zyada ho jaye to purani entries saaf karna
-  if (searchCache.size > 1000) {
-    const oldestKey = searchCache.keys().next().value;
-    searchCache.delete(oldestKey);
-  }
-  searchCache.set(query, {
-    data: data,
-    expiresAt: Date.now() + CACHE_TTL_MS
-  });
-}
-
-// 3. Search Endpoint with Multi-Key Failover + Cache
+// 3. Search Route: Neon DB First -> Then YouTube API Fallback
 app.get('/api/search', async (req, res) => {
   try {
     const rawQuery = req.query.q ? req.query.q.trim() : 'Latest Bollywood Songs';
-    const cacheKey = rawQuery.toLowerCase();
+    const normalizedQuery = rawQuery.toLowerCase();
 
-    // Step A: Pehle check karo memory me result hai ya nahi (0 API units kharch honge)
-    const cachedData = getFromCache(cacheKey);
-    if (cachedData) {
-      console.log(`[Cache Hit] Serving from memory: "${rawQuery}"`);
-      return res.json(cachedData);
+    // STEP A: Pehle Neon Database me check karo
+    if (pool) {
+      try {
+        const dbResult = await pool.query(
+          'SELECT results FROM search_cache WHERE search_query = $1',
+          [normalizedQuery]
+        );
+        if (dbResult.rows.length > 0) {
+          console.log(`⚡ [Neon Cache Hit] Serving from Database: "${rawQuery}"`);
+          return res.json(dbResult.rows[0].results);
+        }
+      } catch (dbErr) {
+        console.warn('DB Fetch failed, falling back to YouTube API:', dbErr.message);
+      }
     }
 
+    // STEP B: Agar DB me nahi hai, YouTube API se lao
     if (API_KEYS.length === 0) {
       return res.status(500).json({ error: 'Render par YOUTUBE_API_KEY set nahi hai.' });
     }
 
-    // Step B: Agar cache me nahi hai, to API call karo (Retry system across all keys)
     let attempts = 0;
     let successData = null;
     let lastError = null;
@@ -82,9 +95,8 @@ app.get('/api/search', async (req, res) => {
         const response = await fetch(apiUrl);
         const data = await response.json();
 
-        // Agar quota limit hit hui (Status 403)
         if (response.status === 403) {
-          console.warn(`[Quota Exceeded] Key index ${currentKeyIndex} is exhausted.`);
+          console.warn(`[Quota Limit] Key ${currentKeyIndex} exhausted.`);
           rotateToNextKey();
           attempts++;
           continue;
@@ -95,7 +107,7 @@ app.get('/api/search', async (req, res) => {
         }
 
         successData = data;
-        break; // Success! Loop stop karo
+        break;
       } catch (err) {
         lastError = err.message;
         rotateToNextKey();
@@ -103,29 +115,47 @@ app.get('/api/search', async (req, res) => {
       }
     }
 
-    // Agar saari keys try karne ke baad data mil gaya:
-    if (successData) {
-      saveToCache(cacheKey, successData); // Agli baar ke liye save kar lo
-      return res.json(successData);
+    if (!successData) {
+      return res.status(500).json({ error: 'Failed to fetch tracks. ' + (lastError || '') });
     }
 
-    // Agar sabhi keys ka quota khatam ho gaya ho
-    res.status(500).json({ 
-      error: 'All YouTube API keys exhausted for today or invalid. ' + (lastError || '') 
-    });
+    // STEP C: Background me Neon DB me store karo (Agli baar ke liye instant)
+    if (pool && successData.items && successData.items.length > 0) {
+      pool.query(
+        `INSERT INTO search_cache (search_query, results) 
+         VALUES ($1, $2) 
+         ON CONFLICT (search_query) DO UPDATE SET results = $2, created_at = CURRENT_TIMESTAMP`,
+        [normalizedQuery, JSON.stringify(successData)]
+      ).catch(e => console.error('Error saving to Neon:', e.message));
+    }
+
+    res.json(successData);
 
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
 
-// 4. Server Health Check & Stats
-app.get('/api/health', (req, res) => {
+// Health check endpoint
+app.get('/api/health', async (req, res) => {
+  let dbStatus = 'Disconnected';
+  let totalSavedSearches = 0;
+
+  if (pool) {
+    try {
+      const countRes = await pool.query('SELECT COUNT(*) FROM search_cache');
+      dbStatus = 'Connected to Neon';
+      totalSavedSearches = parseInt(countRes.rows[0].count);
+    } catch (e) {
+      dbStatus = 'Error: ' + e.message;
+    }
+  }
+
   res.json({
-    status: 'Running',
-    totalKeysConfigured: API_KEYS.length,
-    activeKeyIndex: currentKeyIndex,
-    cachedQueriesCount: searchCache.size
+    server: 'Running',
+    database: dbStatus,
+    savedSearchesInNeon: totalSavedSearches,
+    activeKeyIndex: currentKeyIndex
   });
 });
 
@@ -134,6 +164,4 @@ app.get('*', (req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`🎵 RAGAA Server Running on Port ${PORT} with ${API_KEYS.length} API Key(s)`);
-});
+app.listen(PORT, () => console.log(`🎵 RAGAA Server on Port ${PORT}`));
