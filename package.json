@@ -1,5 +1,5 @@
 {
-  "name": "music-streamer",
+  "name": "ragaa-music",
   "version": "1.0.0",
   "main": "server.js",
   "scripts": {
@@ -7,6 +7,7 @@
   },
   "dependencies": {
     "cors": "^2.8.5",
-    "express": "^4.19.2"
+    "express": "^4.19.2",
+    "pg": "^8.13.0"
   }
 }
